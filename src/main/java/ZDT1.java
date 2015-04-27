@@ -15,6 +15,7 @@ public class ZDT1 {
     static int number = 120;
     static int times = 200;
     static int dimension = 30;
+    static int numOfCondition = 2;
 
     public static void main(String[] args) {
 
@@ -48,6 +49,8 @@ public class ZDT1 {
     private static void pso(double[][] v, double[][] x, double[][] pbest, double[] gbest, double Vmax, double xMax, double xMin) {
         ArrayList<double[]> list = Lists.newArrayList(v);
         double w;
+        double[] gfitness = new double[numOfCondition];
+
         for (int g = 0; g < G; g++) {
             w = w2 + (w1 - w2) * (G - g) / G;
             for (int i = 0; i < number; i++) {
@@ -62,19 +65,39 @@ public class ZDT1 {
                 }
             }
             double fitness[][] = calculateFitness(x);
-//        for (i = 0; i < N; i++) {
-//            pbest[i] = MAX(pbest[i], y[i]);
-//            gbest = MAX(gbest, pbest[i]);
-//        }
+
+            int temp = 0;
+            for (int i = 1; i < number; i++) {
+                if (valueFitness(fitness[temp], fitness[i]) > 0) {
+                    System.arraycopy(x[i], 0, pbest[i], 0, dimension);
+                    temp = i;
+                }
+                if (valueFitness(gfitness, fitness[temp]) > 0) {
+                    System.arraycopy(x[temp], 0, gbest, 0, dimension);
+                }
+            }
         }
     }
 
+
+    private static int valueFitness(double[] srcFitness, double[] destFitnes) {
+        return 0;
+    }
+
+
     private static double[][] calculateFitness(double[][] x) {
-        double[][] fitness = new double[number][2];
+        double[][] fitness = new double[number][numOfCondition];
         for (int i = 0; i < number; i++) {
             fitness[i][0] = getF1x(x[i][0]);
             fitness[i][1] = getF2x(x[i], dimension);
         }
+        return fitness;
+    }
+
+    private static double[] calculateFitness(double[] x) {
+        double[] fitness = new double[numOfCondition];
+        fitness[0] = getF1x(x[0]);
+        fitness[1] = getF2x(x, dimension);
         return fitness;
     }
 
