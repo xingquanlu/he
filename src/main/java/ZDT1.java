@@ -35,48 +35,123 @@ public class ZDT1 {
 
         double velocity[][] = new double[number][dimension];//[-1,1]
         double position[][] = new double[number][dimension];//[0,1]
+        double positionPre[][] = new double[number][dimension];
         double xMin = 0;
         double xMax = 1;
-        double Vmax = xMax - xMin;
+        double vMax = xMax - xMin;
         double personalBest[][] = new double[number][dimension];
+        double pBest[][][] = new double[number][dimension][numOfCondition];
         double globalBest[] = new double[dimension];
+        double gBest[][] = new double[dimension][numOfCondition];
 
-        initial(velocity, position, personalBest, globalBest, xMin, xMax);
+        initial(velocity, position, positionPre, personalBest, globalBest, xMin, xMax);
 
-        pso(velocity, position, personalBest, globalBest, Vmax, xMax, xMin);
+        pso(velocity, position, positionPre, personalBest, globalBest, pBest, gBest, vMax, xMax, xMin);
     }
 
-    private static void pso(double[][] v, double[][] x, double[][] pbest, double[] gbest, double Vmax, double xMax, double xMin) {
-        ArrayList<double[]> list = Lists.newArrayList(v);
+    private static void pso(double[][] v, double[][] x, double[][] xPre, double[][] personalBest, double[] globalBest, double[][][] pBest, double[][] gBest, double vMax, double xMax, double xMin) {
         double w;
-        double[] gfitness = new double[numOfCondition];
+        double[][] fitnessPre = calculateFitness(x);
+        int[] gfIndex = calculateGlobalFitness(fitnessPre);
+        double[] dgBest = new double[dimension];
+        double[][] dpBest = new double[number][dimension];
 
         for (int g = 0; g < G; g++) {
+
+            double fitness[][] = calculateFitness(x);
+
+            for (int i = 0; i < number; i++) {
+                if (fitness[i][0] < fitnessPre[i][0]) {
+                    fitnessPre[i][0] = fitness[i][0];
+                    for (int j = 0; j < dimension; j++) {
+                        pBest[i][j][0] = xPre[i][j];
+                    }
+                }
+                if (fitness[i][1] < fitnessPre[i][1]) {
+                    fitnessPre[i][1] = fitness[i][1];
+                    for (int j = 0; j < dimension; j++) {
+                        pBest[i][j][1] = xPre[i][j];
+                    }
+                }
+            }
+
+            int[] index = calculateGlobalFitness(fitness);
+            if (fitness[index[0]][0] < fitnessPre[gfIndex[0]][0]) {
+                for (int j = 0; j < dimension; j++) {
+                    gBest[j][0] = x[index[0]][j];
+                }
+            }
+            if (fitness[index[1]][1] < fitnessPre[gfIndex[1]][1]) {
+                for (int j = 0; j < dimension; j++) {
+                    gBest[j][1] = x[index[1]][j];
+                }
+            }
+
+            for (int i = 0; i < number; i++) {
+                for (int j = 0; j < numOfCondition; j++) {
+                    fitnessPre[i][j] = fitness[i][j];
+                }
+            }
+
+            for (int j = 0; j < dimension; j++) {
+                globalBest[j] = average(gBest[j][0], gBest[j][1]);
+                dgBest[j] = distance(gBest[j][0], gBest[j][1]);
+            }
+
+            for (int i = 0; i < number; i++) {
+                for (int j = 0; j < dimension; j++) {
+                    dpBest[i][j] = distance(pBest[i][j][0], pBest[i][j][1]);
+                }
+            }
+
+            for (int i = 0; i < number; i++) {
+                for (int j = 0; j < dimension; j++) {
+                    if (dpBest[i][j] < dgBest[j]) {
+                        personalBest[i][j] = randSelect(pBest[i][j][0], pBest[i][j][1]);
+                    } else {
+                        personalBest[i][j] = average(pBest[i][j][0], pBest[i][j][1]);
+                    }
+                }
+            }
+
             w = w2 + (w1 - w2) * (G - g) / G;
             for (int i = 0; i < number; i++) {
                 for (int j = 0; j < dimension; j++) {
-                    v[i][j] = w * v[i][j] + c1 * rand() * (pbest[i][j] - x[i][j]) + c2 * rand() * (gbest[i] - x[i][j]);
-                    if (v[i][j] > Vmax) {
-                        v[i][j] = Vmax;
+                    v[i][j] = w * v[i][j] + c1 * rand() * (personalBest[i][j] - x[i][j]) + c2 * rand() * (globalBest[i] - x[i][j]);
+                    if (v[i][j] > vMax) {
+                        v[i][j] = vMax;
                     }
                     x[i][j] += v[i][j];
                     if (x[i][j] < xMin) x[i][j] = xMin;
                     if (x[i][j] > xMax) x[i][j] = xMax;
                 }
             }
-            double fitness[][] = calculateFitness(x);
+        }
+    }
 
-            int temp = 0;
-            for (int i = 1; i < number; i++) {
-                if (valueFitness(fitness[temp], fitness[i]) > 0) {
-                    System.arraycopy(x[i], 0, pbest[i], 0, dimension);
-                    temp = i;
-                }
-                if (valueFitness(gfitness, fitness[temp]) > 0) {
-                    System.arraycopy(x[temp], 0, gbest, 0, dimension);
-                }
+    private static double randSelect(double v, double v1) {
+        return (rand() > 0.5) ? v : v1;
+    }
+
+    private static double distance(double v, double v1) {
+        return Math.abs(v - v1);
+    }
+
+    private static double average(double v, double v1) {
+        return (v + v1) / 2.0;
+    }
+
+    private static int[] calculateGlobalFitness(double[][] fitness) {
+        int[] index = new int[numOfCondition];
+        for (int i = 0; i < numOfCondition; i++) {
+            index[i] = 0;
+        }
+        for (int i = 1; i < number; i++) {
+            for (int j = 0; j < numOfCondition; j++) {
+                index[j] = (fitness[i][j] < fitness[index[j]][j]) ? i : index[j];
             }
         }
+        return index;
     }
 
 
@@ -101,12 +176,12 @@ public class ZDT1 {
         return fitness;
     }
 
-    private static void initial(double[][] v, double[][] x, double[][] pBest, double[] gBest, double xMin, double xMax) {
+    private static void initial(double[][] v, double[][] x, double[][] xPre, double[][] pBest, double[] gBest, double xMin, double xMax) {
         for (int i = 0; i < number; i++) {
             for (int j = 0; j < dimension; j++) {
                 v[i][j] = -(xMax - xMin) + rand() * (xMax - xMin) * 2;
                 x[i][j] = xMin + rand() * (xMax - xMin);
-                pBest[i][j] = v[i][j];
+                xPre[i][j] = x[i][j];
             }
         }
     }
