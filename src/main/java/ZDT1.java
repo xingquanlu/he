@@ -1,6 +1,5 @@
-import com.google.common.collect.Lists;
-
-import java.util.ArrayList;
+import javax.swing.*;
+import java.awt.*;
 import java.util.Random;
 
 /**
@@ -12,25 +11,32 @@ public class ZDT1 {
     static final double w1 = 0.9;
     static final double w2 = 0.4;
     static final int G = 100;
+    public static final int WINDOWSWIDTH = 400;
+    public static final int WINDOWSHEIGHT = 400;
     static int number = 120;
     static int times = 200;
     static int dimension = 30;
     static int numOfCondition = 2;
+    private static JPanel jPanel;
+    private static double[][] fitness;
 
     public static void main(String[] args) {
 
-//        JFrame frame = new JFrame();
-//        JPanel panel = new JPanel();
-//        JTextArea textArea = new JTextArea();
-//
-//        panel.setLayout(new GridLayout());
-//        textArea.setText("test");
-//        //当TextArea里的内容过长时生成滚动条
-//        panel.add(new JScrollPane(textArea));
-//        frame.add(panel);
-//
-//        frame.setSize(200, 200);
-//        frame.setVisible(true);
+        JFrame frame = new JFrame();
+        jPanel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                g.setColor(Color.blue);
+                for (int i = 0; i < number; i++) {
+                    g.fillOval((int) (400 * fitness[i][0]), (int) (WINDOWSHEIGHT - 200 * fitness[i][1]), 5, 5);
+                }
+            }
+        };
+        frame.setContentPane(jPanel);
+        frame.setSize(WINDOWSWIDTH, WINDOWSHEIGHT);
+        frame.setVisible(true);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 
         double velocity[][] = new double[number][dimension];//[-1,1]
@@ -49,6 +55,10 @@ public class ZDT1 {
         pso(velocity, position, positionPre, personalBest, globalBest, pBest, gBest, vMax, xMax, xMin);
     }
 
+    private static void repaint() {
+        jPanel.repaint();
+    }
+
     private static void pso(double[][] v, double[][] x, double[][] xPre, double[][] personalBest, double[] globalBest, double[][][] pBest, double[][] gBest, double vMax, double xMax, double xMin) {
         double w;
         double[][] fitnessPre = calculateFitness(x);
@@ -58,7 +68,13 @@ public class ZDT1 {
 
         for (int g = 0; g < G; g++) {
 
-            double fitness[][] = calculateFitness(x);
+            fitness = calculateFitness(x);
+
+            repaint();
+            for (int i = 0; i < number; i++) {
+                System.out.print(fitness[i][0] + " " + fitness[i][1]);
+            }
+            System.out.println("\n");
 
             for (int i = 0; i < number; i++) {
                 if (fitness[i][0] < fitnessPre[i][0]) {
@@ -117,13 +133,14 @@ public class ZDT1 {
             w = w2 + (w1 - w2) * (G - g) / G;
             for (int i = 0; i < number; i++) {
                 for (int j = 0; j < dimension; j++) {
-                    v[i][j] = w * v[i][j] + c1 * rand() * (personalBest[i][j] - x[i][j]) + c2 * rand() * (globalBest[i] - x[i][j]);
+                    v[i][j] = w * v[i][j] + c1 * rand() * (personalBest[i][j] - x[i][j]) + c2 * rand() * (globalBest[j] - x[i][j]);
                     if (v[i][j] > vMax) {
                         v[i][j] = vMax;
                     }
                     x[i][j] += v[i][j];
                     if (x[i][j] < xMin) x[i][j] = xMin;
                     if (x[i][j] > xMax) x[i][j] = xMax;
+
                 }
             }
         }
