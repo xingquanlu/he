@@ -1,26 +1,35 @@
+import com.google.common.base.Preconditions;
+import con.TestFunction;
+
 import javax.swing.*;
 import java.awt.*;
+import java.util.Arrays;
 import java.util.Random;
 
 /**
  * Created by lxq on 15-4-20.
  */
-public class ZDT1 {
+public class MOPSO {
+    static TestFunction function = TestFunction.ZDT3;
     static final int c1 = 2;
     static final int c2 = 2;
     static final double w1 = 0.9;
     static final double w2 = 0.4;
-    static final int G = 100;
-    public static final int WINDOWS_WIDTH = 400;
-    public static final int WINDOWS_HEIGHT = 400;
-    public static final int X_BASE_VALUE = 50;
-    public static final int Y_BASE_VALUE = 50;
-    static int number = 100;
+    static final int G = 200;
+    public static final int WINDOWS_WIDTH = 600;
+    public static final int WINDOWS_HEIGHT = 600;
+    public static final int X_BASE_VALUE = 400;
+    public static final int Y_BASE_VALUE = 200;
+    public static final int STATE_UPDATE = 1;
+    public static final int STATE_NOTCHANGE = 2;
+    static int number = 12;
     static int times = 200;
-    static int dimension = 1;
+    static int dimension = 30;
     static int numOfCondition = 2;
     private static JPanel jPanel;
     private static double[][] fitness;
+    private static double w;
+    private static int[] parotFont;
 
     public static void main(String[] args) {
 
@@ -30,15 +39,18 @@ public class ZDT1 {
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 g.setColor(Color.blue);
-                g.drawLine(0, WINDOWS_HEIGHT, WINDOWS_WIDTH, WINDOWS_HEIGHT);
-                g.drawLine(0, WINDOWS_HEIGHT, 0, 0);
+                g.drawLine(0, WINDOWS_HEIGHT, X_BASE_VALUE * 1, WINDOWS_HEIGHT);
+                g.drawLine(0, WINDOWS_HEIGHT, 0, WINDOWS_HEIGHT - Y_BASE_VALUE * 1);
                 for (int i = 0; i < number; i++) {
-                    g.fillOval((int) (X_BASE_VALUE * fitness[i][0]), (int) (WINDOWS_HEIGHT - Y_BASE_VALUE * fitness[i][1]), 5, 5);
+//                    if (parotFont[i] == STATE_NOTCHANGE)
+                    {
+                        g.fillOval((int) (X_BASE_VALUE * fitness[i][0]), (int) (WINDOWS_HEIGHT - Y_BASE_VALUE * fitness[i][1]), 5, 5);
+                    }
                 }
             }
         };
         frame.setContentPane(jPanel);
-        frame.setSize(WINDOWS_WIDTH, WINDOWS_HEIGHT);
+        frame.setSize(WINDOWS_WIDTH, WINDOWS_HEIGHT + 50);
         frame.setVisible(true);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
@@ -46,8 +58,8 @@ public class ZDT1 {
         double velocity[][] = new double[number][dimension];//[-1,1]
         double position[][] = new double[number][dimension];//[0,1]
         double positionPre[][] = new double[number][dimension];
-        double xMin = -5;
-        double xMax = 7;
+        double xMin = 0;
+        double xMax = 1;
         double vMax = xMax - xMin;
         double personalBest[][] = new double[number][dimension];
         double globalBest[] = new double[dimension];
@@ -62,49 +74,72 @@ public class ZDT1 {
     }
 
     private static void pso(double[][] v, double[][] x, double[][] xPre, double[][] personalBest, double[] globalBest, double vMax, double xMax, double xMin) {
-        double w;
         double[][] fitnessPre = calculateFitness(x);
         double[] dgBest = new double[dimension];
         double[][] dpBest = new double[number][dimension];
         double[][] gBest = new double[numOfCondition][dimension];
+        //gBest初始化
         for (int i = 0; i < dimension; i++) {
             gBest[0][i] = x[0][i];
             gBest[1][i] = x[0][i];
         }
-        double pBest[][][] = new double[number][dimension][numOfCondition];
+        //pBest初始化
+        double pBest[][][] = new double[numOfCondition][number][dimension];
         for (int i = 0; i < number; i++) {
             for (int j = 0; j < dimension; j++) {
-                pBest[i][j][0] = xPre[i][j];
-                pBest[i][j][1] = xPre[i][j];
+                pBest[0][i][j] = xPre[i][j];
+                pBest[1][i][j] = xPre[i][j];
             }
         }
+        //迭代G代
         for (int g = 0; g < G; g++) {
 
             fitness = calculateFitness(x);
-
+            parotFont = checkParotFont(fitness);
             repaint();
             for (int i = 0; i < number; i++) {
                 System.out.print(fitness[i][0] + " " + fitness[i][1] + ";  ");
             }
+
+
+            System.out.println("\n" + Arrays.toString(parotFont));
+            for (int i = 0; i < number; i++) {
+                if (parotFont[i] == STATE_NOTCHANGE) {
+                    continue;
+                }
+                for (int j = 0; j < dimension; j++) {
+                    v[i][j] = w * v[i][j] + c1 * rand() * (personalBest[i][j] - x[i][j]) + c2 * rand() * (globalBest[j] - x[i][j]);
+                    if (v[i][j] > vMax) {
+                        v[i][j] = vMax;
+                    }
+                    if (v[i][j] < -vMax) {
+                        v[i][j] = -vMax;
+                    }
+                    x[i][j] += v[i][j];
+                    if (x[i][j] < xMin) x[i][j] = xMin;
+                    if (x[i][j] > xMax) x[i][j] = xMax;
+                }
+            }
             System.out.println("\n");
 
+            //pBest更新
             for (int i = 0; i < number; i++) {
                 if (fitness[i][0] < fitnessPre[i][0]) {
                     fitnessPre[i][0] = fitness[i][0];
                     for (int j = 0; j < dimension; j++) {
-                        pBest[i][j][0] = xPre[i][j];
+                        pBest[0][i][j] = xPre[i][j];
                     }
                 }
                 if (fitness[i][1] < fitnessPre[i][1]) {
                     fitnessPre[i][1] = fitness[i][1];
                     for (int j = 0; j < dimension; j++) {
-                        pBest[i][j][1] = xPre[i][j];
+                        pBest[1][i][j] = xPre[i][j];
                     }
                 }
             }
 
-            int[] index = calculateGlobalFitness(fitness);
-
+            //gBest更新
+            int[] index = calculateMinIndex(fitness, numOfCondition);
             if (fitness[index[0]][0] < calculateFitness(gBest[0])[0]) {
                 for (int j = 0; j < dimension; j++) {
                     gBest[0][j] = x[index[0]][j];
@@ -122,28 +157,30 @@ public class ZDT1 {
                 }
             }
 
-
+            //更新globalBest，dgBest
             for (int j = 0; j < dimension; j++) {
                 globalBest[j] = average(gBest[0][j], gBest[1][j]);
                 dgBest[j] = distance(gBest[0][j], gBest[1][j]);
             }
-
+            //更新dpBest
             for (int i = 0; i < number; i++) {
                 for (int j = 0; j < dimension; j++) {
-                    dpBest[i][j] = distance(pBest[i][j][0], pBest[i][j][1]);
+                    dpBest[i][j] = distance(pBest[0][i][j], pBest[1][i][j]);
                 }
             }
 
+            //更新personalBest
             for (int i = 0; i < number; i++) {
                 for (int j = 0; j < dimension; j++) {
                     if (dpBest[i][j] < dgBest[j]) {
-                        personalBest[i][j] = randSelect(pBest[i][j][0], pBest[i][j][1]);
+                        personalBest[i][j] = randSelect(pBest[0][i][j], pBest[1][i][j]);
                     } else {
-                        personalBest[i][j] = average(pBest[i][j][0], pBest[i][j][1]);
+                        personalBest[i][j] = average(pBest[0][i][j], pBest[1][i][j]);
                     }
                 }
             }
 
+            //更新v、x
             w = w2 + (w1 - w2) * (G - g) / G;
             for (int i = 0; i < number; i++) {
                 for (int j = 0; j < dimension; j++) {
@@ -151,12 +188,48 @@ public class ZDT1 {
                     if (v[i][j] > vMax) {
                         v[i][j] = vMax;
                     }
+                    if (v[i][j] < -vMax) {
+                        v[i][j] = -vMax;
+                    }
                     x[i][j] += v[i][j];
                     if (x[i][j] < xMin) x[i][j] = xMin;
                     if (x[i][j] > xMax) x[i][j] = xMax;
                 }
             }
         }
+    }
+
+    private static int[] checkParotFont(double[][] fitness) {
+        int[] isUpdate = new int[number];
+        int x0 = calculateMinIndexInX(fitness);
+        isUpdate[x0] = STATE_NOTCHANGE;
+        int x1 = 0;
+        for (int i = 0; i < number; i++) {
+            double k = 0.0;
+            boolean isFinish = true;
+
+            for (int j = 0; j < number; j++) {
+                if (isUpdate[j] == STATE_NOTCHANGE || isUpdate[j] == STATE_UPDATE) {
+                    continue;
+                }
+                double tanA = (fitness[x0][1] - fitness[j][1]) / (fitness[x0][0] - fitness[j][0]);
+                if (tanA >= 0) {
+                    isUpdate[j] = STATE_UPDATE;
+                } else {
+                    if (tanA < k) {
+                        isFinish = false;
+                        x1 = j;
+                        k = tanA;
+                    }
+                }
+            }
+            if (isFinish) {
+                break;
+            }
+            isUpdate[x1] = STATE_NOTCHANGE;
+            x0 = x1;
+        }
+        return isUpdate;
     }
 
     private static double randSelect(double v, double v1) {
@@ -171,15 +244,40 @@ public class ZDT1 {
         return (v + v1) / 2.0;
     }
 
-    private static int[] calculateGlobalFitness(double[][] fitness) {
-        int[] index = new int[numOfCondition];
-        for (int i = 0; i < numOfCondition; i++) {
+    //分别找出每个粒子在各dim上fitness最小的点的索引
+    private static int[] calculateMinIndex(double[][] fitness, int dim) {
+        Preconditions.checkArgument(dim > 0);
+        int[] index = new int[dim];
+        for (int i = 0; i < dim; i++) {
             index[i] = 0;
         }
         for (int i = 1; i < number; i++) {
-            for (int j = 0; j < numOfCondition; j++) {
+            for (int j = 0; j < dim; j++) {
                 index[j] = (fitness[i][j] < fitness[index[j]][j]) ? i : index[j];
             }
+        }
+        return index;
+    }
+
+    //求x最小的最左下方的点
+    private static int calculateMinIndexInX(double[][] fitness) {
+        int index = 0;
+        for (int i = 0; i < number; i++) {
+            if (fitness[i][0] < fitness[index][0]) {
+                index = i;
+            } else if (fitness[i][0] == fitness[index][0]) {
+                if (fitness[i][1] < fitness[i][1]) {
+                    index = i;
+                }
+            }
+        }
+        return index;
+    }
+
+    private static int calculateMinIndex(double[] value) {
+        int index = 0;
+        for (int i = 1; i < number; i++) {
+            index = (value[i] < value[index]) ? i : index;
         }
         return index;
     }
@@ -219,21 +317,42 @@ public class ZDT1 {
 
     private static final double getGx(double x[], int dim) {
         double result = 0.0;
-        for (int i = 1; i < dim; i++) {
-            result = +x[i];
+        switch (function) {
+            case ZDT1:
+            case ZDT2:
+            case ZDT3:
+                for (int i = 1; i < dim; i++) {
+                    result = +x[i];
+                }
+                return 1 + result * 9 / (dim - 1);
+            case ZDT4:
+                for (int i = 1; i < dim; i++) {
+                    result = +(x[i] * x[i] - 10 * Math.cos(4 * Math.PI * x[i]));
+                }
+                return 1 + 10 * (number - 1) + result;
         }
-        return 1 + result * 9 / (dim - 1);
+
+        return 1;
     }
 
     private static final double getF1x(double x) {
-        return x * x;
+        return x;
     }
 
     private static final double getF2x(double xx[], int dim) {
-//        double gx = getGx(xx, dim);
-//        return gx * (1 - Math.sqrt(getF1x(xx[0]) / gx));
-//        return gx * (1 - (getF1x(xx[0]) / gx) * (getF1x(xx[0]) / gx));
-        return (xx[0] - 2) * (xx[0] - 2);
+        double gx = getGx(xx, dim);
+        double f1 = getF1x(xx[0]);
+        switch (function) {
+            case ZDT1:
+            case ZDT4:
+                return gx * (1 - Math.sqrt(f1 / gx));
+            case ZDT2:
+                return gx * (1 - (f1 / gx) * (f1 / gx));
+            case ZDT3:
+                return gx * (1 - Math.sqrt(f1 / gx) - f1 / gx * Math.sin(10 * Math.PI * f1));
+        }
+        return 1;
+//        return (xx[0] - 2) * (xx[0] - 2);
     }
 
     //[0,1]
