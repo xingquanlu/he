@@ -3,33 +3,43 @@ import con.TestFunction;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Arrays;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.Random;
 
 /**
  * Created by lxq on 15-4-20.
  */
 public class MOPSO {
-    static TestFunction function = TestFunction.ZDT3;
-    static final int c1 = 2;
-    static final int c2 = 2;
-    static final double w1 = 0.9;
-    static final double w2 = 0.4;
-    static final int G = 200;
-    public static final int WINDOWS_WIDTH = 600;
-    public static final int WINDOWS_HEIGHT = 600;
+    public static final int VALUE_POSITIVE = 1;
+    public static final int VALUE_NEGATIVE = -1;
+    public static final int VALUE_EITHER = 0;
+    static TestFunction function = TestFunction.ZDT4;
+    static final double c1 = 2;
+    static final double c2 = 2;
+    static final double w1 = 0.4;
+    static final double w2 = 0.3;
+    static final int gen = 200;
+    static final int number = 120;
+    static final int dimension = 30;
+    static final int numOfCondition = 2;
+    public static final int WINDOWS_WIDTH = 800;
+    public static final int WINDOWS_HEIGHT = 400;
     public static final int X_BASE_VALUE = 400;
     public static final int Y_BASE_VALUE = 200;
-    public static final int STATE_UPDATE = 1;
-    public static final int STATE_NOTCHANGE = 2;
-    static int number = 12;
-    static int times = 200;
-    static int dimension = 30;
-    static int numOfCondition = 2;
+    public static final int X_OFFSET = 50;
+    public static final int Y_OFFSET = 100;
+    public static final int STATE_BEGOVERN = 1;
+    public static final int STATE_NOTBEGOVERN = 2;
     private static JPanel jPanel;
     private static double[][] fitness;
     private static double w;
     private static int[] parotFont;
+    private static boolean isShowParot = true;
+    private static Random random = new Random();
+    private static double[][] v = new double[number][dimension];
+    private static double[][] x = new double[number][dimension];
+
 
     public static void main(String[] args) {
 
@@ -39,224 +49,260 @@ public class MOPSO {
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 g.setColor(Color.blue);
-                g.drawLine(0, WINDOWS_HEIGHT, X_BASE_VALUE * 1, WINDOWS_HEIGHT);
-                g.drawLine(0, WINDOWS_HEIGHT, 0, WINDOWS_HEIGHT - Y_BASE_VALUE * 1);
+                g.drawLine(X_OFFSET, WINDOWS_HEIGHT - Y_OFFSET, X_OFFSET + X_BASE_VALUE * 1, WINDOWS_HEIGHT - Y_OFFSET);
+                g.drawLine(X_OFFSET, WINDOWS_HEIGHT - Y_OFFSET + Y_BASE_VALUE / 2, X_OFFSET, WINDOWS_HEIGHT - Y_BASE_VALUE * 1 - Y_OFFSET);
+                for (int i = 0; i < 7; i++) {
+                    g.drawString(String.valueOf(-1 + i * 0.5), X_OFFSET - 23, WINDOWS_HEIGHT - Y_OFFSET + Y_BASE_VALUE / 2 - i * Y_BASE_VALUE / 4);
+                }
+                for (int i = 0; i < 6; i++) {
+                    g.drawString(String.format("%.1f", i * 0.2), X_OFFSET + X_BASE_VALUE / 5 * i, WINDOWS_HEIGHT - Y_OFFSET + 20);
+                }
                 for (int i = 0; i < number; i++) {
-//                    if (parotFont[i] == STATE_NOTCHANGE)
-                    {
-                        g.fillOval((int) (X_BASE_VALUE * fitness[i][0]), (int) (WINDOWS_HEIGHT - Y_BASE_VALUE * fitness[i][1]), 5, 5);
+                    if (isShowParot || parotFont[i] == STATE_NOTBEGOVERN) {
+                        g.fillOval((int) (X_BASE_VALUE * fitness[i][0]) + X_OFFSET, (int) (WINDOWS_HEIGHT - Y_BASE_VALUE * fitness[i][1]) - Y_OFFSET, 5, 5);
+//                        g.drawString(String.valueOf(i), (int) (X_BASE_VALUE * fitness[i][0]) + X_OFFSET, (int) (WINDOWS_HEIGHT - Y_BASE_VALUE * fitness[i][1]) - Y_OFFSET);
                     }
                 }
             }
         };
-        frame.setContentPane(jPanel);
+
+        JButton jb_w1 = new JButton("w1");
+        JButton jb_w2 = new JButton("w2");
+        JButton jb_c1 = new JButton("c1");
+        JButton jb_c2 = new JButton("c2");
+        JButton jb_num = new JButton("粒子个数");
+        JButton jb_gen = new JButton("迭代次数");
+        JButton jb_isShowParot = new JButton("仅显示parotfont");
+        final Checkbox checkbox = new Checkbox();
+        checkbox.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent e) {
+                isShowParot = !checkbox.getState();
+                repaint();
+            }
+        });
+        JComboBox comboBox = new JComboBox();
+        comboBox.addItem("ZDT1");
+        comboBox.addItem("ZDT2");
+        comboBox.addItem("ZDT3");
+        comboBox.addItem("ZDT4");
+        JButton jb_ok = new JButton("确定");
+
+        JTextField jt_w1 = new JTextField(String.valueOf(w1));
+        JTextField jt_w2 = new JTextField(String.valueOf(w2));
+        JTextField jt_c1 = new JTextField(String.valueOf(c1));
+        JTextField jt_c2 = new JTextField(String.valueOf(c2));
+        JTextField jt_num = new JTextField(String.valueOf(number));
+        JTextField jt_gen = new JTextField(String.valueOf(gen));
+        GridLayout layout = new GridLayout(8, 2, 9, 9);
+        JPanel jPanel1 = new JPanel();
+        jPanel1.setLayout(layout);
+        jPanel1.add(jb_w1);
+        jPanel1.add(jt_w1);
+        jPanel1.add(jb_w2);
+        jPanel1.add(jt_w2);
+        jPanel1.add(jb_c1);
+        jPanel1.add(jt_c1);
+        jPanel1.add(jb_c2);
+        jPanel1.add(jt_c2);
+        jPanel1.add(jb_num);
+        jPanel1.add(jt_num);
+        jPanel1.add(jb_gen);
+        jPanel1.add(jt_gen);
+        jPanel1.add(jb_isShowParot);
+        jPanel1.add(checkbox);
+        jPanel1.add(comboBox);
+        jPanel1.add(jb_ok);
+
+        frame.add(jPanel, BorderLayout.CENTER);
+
+        JPanel jPanel2 = new JPanel();
+        jPanel2.setLayout(new BorderLayout());
+        jPanel2.add(jPanel1, BorderLayout.NORTH);
+        frame.add(jPanel2, BorderLayout.EAST);
         frame.setSize(WINDOWS_WIDTH, WINDOWS_HEIGHT + 50);
         frame.setVisible(true);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-
-        double velocity[][] = new double[number][dimension];//[-1,1]
-        double position[][] = new double[number][dimension];//[0,1]
-        double positionPre[][] = new double[number][dimension];
         double xMin = 0;
         double xMax = 1;
-        double vMax = xMax - xMin;
+        double x1Min = 0;
+        double x1Max = 1;
         double personalBest[][] = new double[number][dimension];
-        double globalBest[] = new double[dimension];
+        double globalBest[][] = new double[number][dimension];
 
-        initial(velocity, position, positionPre, personalBest, globalBest, xMin, xMax);
-
-        pso(velocity, position, positionPre, personalBest, globalBest, vMax, xMax, xMin);
+        initial(xMin, xMax, x1Max, x1Min);
+        pso(personalBest, globalBest, xMax, xMin, x1Max, x1Min);
     }
 
     private static void repaint() {
         jPanel.repaint();
     }
 
-    private static void pso(double[][] v, double[][] x, double[][] xPre, double[][] personalBest, double[] globalBest, double vMax, double xMax, double xMin) {
-        double[][] fitnessPre = calculateFitness(x);
-        double[] dgBest = new double[dimension];
-        double[][] dpBest = new double[number][dimension];
-        double[][] gBest = new double[numOfCondition][dimension];
-        //gBest初始化
-        for (int i = 0; i < dimension; i++) {
-            gBest[0][i] = x[0][i];
-            gBest[1][i] = x[0][i];
-        }
-        //pBest初始化
-        double pBest[][][] = new double[numOfCondition][number][dimension];
-        for (int i = 0; i < number; i++) {
-            for (int j = 0; j < dimension; j++) {
-                pBest[0][i][j] = xPre[i][j];
-                pBest[1][i][j] = xPre[i][j];
-            }
-        }
+    private static void pso(double[][] personalBest, double[][] globalBest, double xMax, double xMin, double x1Max, double x1Min) {
+        double[][] fitnessPLast = calculateFitness(x);
+        int[] controlPNumLast = new int[number];
+
         //迭代G代
-        for (int g = 0; g < G; g++) {
+        for (int g = 0; g < gen; g++) {
 
             fitness = calculateFitness(x);
             parotFont = checkParotFont(fitness);
             repaint();
             for (int i = 0; i < number; i++) {
-                System.out.print(fitness[i][0] + " " + fitness[i][1] + ";  ");
+                System.out.print(fitness[i][0] + " " + fitness[i][1] + "; ");
             }
+            System.out.println();
 
+            int[] array = calculateControlNum(fitness);
 
-            System.out.println("\n" + Arrays.toString(parotFont));
+            int numBeGovern = 0;
+            int numNotBeGovern = 0;
             for (int i = 0; i < number; i++) {
-                if (parotFont[i] == STATE_NOTCHANGE) {
-                    continue;
-                }
-                for (int j = 0; j < dimension; j++) {
-                    v[i][j] = w * v[i][j] + c1 * rand() * (personalBest[i][j] - x[i][j]) + c2 * rand() * (globalBest[j] - x[i][j]);
-                    if (v[i][j] > vMax) {
-                        v[i][j] = vMax;
-                    }
-                    if (v[i][j] < -vMax) {
-                        v[i][j] = -vMax;
-                    }
-                    x[i][j] += v[i][j];
-                    if (x[i][j] < xMin) x[i][j] = xMin;
-                    if (x[i][j] > xMax) x[i][j] = xMax;
-                }
+                numBeGovern = (parotFont[i] == STATE_BEGOVERN) ? numBeGovern + 1 : numBeGovern;
+                numNotBeGovern = (parotFont[i] == STATE_NOTBEGOVERN) ? numNotBeGovern + 1 : numNotBeGovern;
             }
-            System.out.println("\n");
 
-            //pBest更新
+            int[] indexBeGovern = new int[numBeGovern];
+            int[] indexNotBeGovern = new int[numNotBeGovern];
+            int p = 0, q = 0;
             for (int i = 0; i < number; i++) {
-                if (fitness[i][0] < fitnessPre[i][0]) {
-                    fitnessPre[i][0] = fitness[i][0];
-                    for (int j = 0; j < dimension; j++) {
-                        pBest[0][i][j] = xPre[i][j];
-                    }
-                }
-                if (fitness[i][1] < fitnessPre[i][1]) {
-                    fitnessPre[i][1] = fitness[i][1];
-                    for (int j = 0; j < dimension; j++) {
-                        pBest[1][i][j] = xPre[i][j];
-                    }
+                switch (parotFont[i]) {
+                    case STATE_BEGOVERN:
+                        indexBeGovern[p++] = i;
+                        break;
+                    case STATE_NOTBEGOVERN:
+                        indexNotBeGovern[q++] = i;
+                        break;
+                    default:
+                        for (int j = 0; j < number; j++) {
+                            System.out.print(parotFont[j] + " ");
+                        }
+                        System.out.println("\n");
+                        throw new IllegalStateException();
                 }
             }
 
-            //gBest更新
-            int[] index = calculateMinIndex(fitness, numOfCondition);
-            if (fitness[index[0]][0] < calculateFitness(gBest[0])[0]) {
-                for (int j = 0; j < dimension; j++) {
-                    gBest[0][j] = x[index[0]][j];
-                }
-            }
-            if (fitness[index[1]][1] < calculateFitness(gBest[1])[1]) {
-                for (int j = 0; j < dimension; j++) {
-                    gBest[1][j] = x[index[1]][j];
-                }
-            }
 
             for (int i = 0; i < number; i++) {
-                for (int j = 0; j < numOfCondition; j++) {
-                    fitnessPre[i][j] = fitness[i][j];
-                }
-            }
-
-            //更新globalBest，dgBest
-            for (int j = 0; j < dimension; j++) {
-                globalBest[j] = average(gBest[0][j], gBest[1][j]);
-                dgBest[j] = distance(gBest[0][j], gBest[1][j]);
-            }
-            //更新dpBest
-            for (int i = 0; i < number; i++) {
-                for (int j = 0; j < dimension; j++) {
-                    dpBest[i][j] = distance(pBest[0][i][j], pBest[1][i][j]);
+                int k;
+                switch (parotFont[i]) {
+                    case STATE_NOTBEGOVERN:
+//                        k = rand(numBeGovern);
+//                        for (int j = 0; j < dimension; j++) {
+//                            globalBest[i][j] = x[indexBeGovern[k]][j];
+//                        }
+//                        break;
+                    case STATE_BEGOVERN:
+                        k = rand(numNotBeGovern);
+                        for (int j = 0; j < dimension; j++) {
+                            globalBest[i][j] = x[indexNotBeGovern[k]][j];
+                        }
+                        break;
                 }
             }
 
             //更新personalBest
             for (int i = 0; i < number; i++) {
-                for (int j = 0; j < dimension; j++) {
-                    if (dpBest[i][j] < dgBest[j]) {
-                        personalBest[i][j] = randSelect(pBest[0][i][j], pBest[1][i][j]);
-                    } else {
-                        personalBest[i][j] = average(pBest[0][i][j], pBest[1][i][j]);
-                    }
+                switch (valueFitness(fitness[i], fitnessPLast[i])) {
+                    case VALUE_EITHER:
+                        if (controlPNumLast[i] >= array[i]) {
+                            break;
+                        }
+                    case VALUE_POSITIVE:
+                        for (int j = 0; j < dimension; j++) {
+                            personalBest[i][j] = x[i][j];
+                        }
+                        for (int j = 0; j < numOfCondition; j++) {
+                            fitnessPLast[i][j] = fitness[i][j];
+                        }
+                        controlPNumLast[i] = array[i];
+                        break;
+                    case VALUE_NEGATIVE:
+                        break;
                 }
             }
 
             //更新v、x
-            w = w2 + (w1 - w2) * (G - g) / G;
+            w = w2 + (w1 - w2) * (gen - g) / gen;
             for (int i = 0; i < number; i++) {
-                for (int j = 0; j < dimension; j++) {
-                    v[i][j] = w * v[i][j] + c1 * rand() * (personalBest[i][j] - x[i][j]) + c2 * rand() * (globalBest[j] - x[i][j]);
-                    if (v[i][j] > vMax) {
-                        v[i][j] = vMax;
-                    }
-                    if (v[i][j] < -vMax) {
-                        v[i][j] = -vMax;
-                    }
-                    x[i][j] += v[i][j];
-                    if (x[i][j] < xMin) x[i][j] = xMin;
-                    if (x[i][j] > xMax) x[i][j] = xMax;
+                v[i][0] = updateV(v[i][0], x[i][0], personalBest[i][0], globalBest[i][0], x1Max, x1Min);
+                x[i][0] = updateX(v[i][0], x[i][0], x1Max, x1Min);
+                for (int j = 1; j < dimension; j++) {
+                    v[i][j] = updateV(v[i][j], x[i][j], personalBest[i][j], globalBest[i][j], xMax, xMin);
+                    x[i][j] = updateX(v[i][j], x[i][j], xMax, xMin);
                 }
             }
         }
+    }
+
+    private static double d(int[] index) {
+        for (int i = 0; i < number; i++) {
+            for (int j = 0; j < number; j++) {
+                if (fitness[j][0] < fitness[i][0]) {
+
+                } else {
+
+                }
+            }
+        }
+        return 1;
+    }
+
+    private static double updateV(double v, double x, double pBest, double gbest, double xMax, double xMin) {
+        v = w * v + c1 * rand() * (pBest - x) + c2 * rand() * (gbest - x);
+        double vMax = xMax - xMin;
+        if (v > vMax) {
+            v = vMax;
+        }
+        if (v < -vMax) {
+            v = -vMax;
+        }
+        return v;
+    }
+
+    private static double updateX(double v, double x, double xMax, double xMin) {
+        x += v;
+        if (x < xMin) {
+            x = xMin;
+        }
+        if (x > xMax) {
+            x = xMax;
+        }
+        return x;
     }
 
     private static int[] checkParotFont(double[][] fitness) {
         int[] isUpdate = new int[number];
         int x0 = calculateMinIndexInX(fitness);
-        isUpdate[x0] = STATE_NOTCHANGE;
+        isUpdate[x0] = STATE_NOTBEGOVERN;
         int x1 = 0;
         for (int i = 0; i < number; i++) {
             double k = 0.0;
-            boolean isFinish = true;
-
             for (int j = 0; j < number; j++) {
-                if (isUpdate[j] == STATE_NOTCHANGE || isUpdate[j] == STATE_UPDATE) {
+                if (isUpdate[j] == STATE_BEGOVERN || isUpdate[j] == STATE_NOTBEGOVERN || x0 == j) {
+                    continue;
+                }
+                if (fitness[x0][0] == fitness[j][0]) {
+                    isUpdate[j] = STATE_BEGOVERN;
                     continue;
                 }
                 double tanA = (fitness[x0][1] - fitness[j][1]) / (fitness[x0][0] - fitness[j][0]);
                 if (tanA >= 0) {
-                    isUpdate[j] = STATE_UPDATE;
+                    isUpdate[j] = STATE_BEGOVERN;
                 } else {
                     if (tanA < k) {
-                        isFinish = false;
                         x1 = j;
                         k = tanA;
                     }
                 }
             }
-            if (isFinish) {
+            if (k == 0) {
                 break;
             }
-            isUpdate[x1] = STATE_NOTCHANGE;
+            isUpdate[x1] = STATE_NOTBEGOVERN;
             x0 = x1;
         }
         return isUpdate;
-    }
-
-    private static double randSelect(double v, double v1) {
-        return (rand() > 0.5) ? v : v1;
-    }
-
-    private static double distance(double v, double v1) {
-        return Math.abs(v - v1);
-    }
-
-    private static double average(double v, double v1) {
-        return (v + v1) / 2.0;
-    }
-
-    //分别找出每个粒子在各dim上fitness最小的点的索引
-    private static int[] calculateMinIndex(double[][] fitness, int dim) {
-        Preconditions.checkArgument(dim > 0);
-        int[] index = new int[dim];
-        for (int i = 0; i < dim; i++) {
-            index[i] = 0;
-        }
-        for (int i = 1; i < number; i++) {
-            for (int j = 0; j < dim; j++) {
-                index[j] = (fitness[i][j] < fitness[index[j]][j]) ? i : index[j];
-            }
-        }
-        return index;
     }
 
     //求x最小的最左下方的点
@@ -274,17 +320,39 @@ public class MOPSO {
         return index;
     }
 
-    private static int calculateMinIndex(double[] value) {
+    private static int calculateMaxIndex(double[] value) {
         int index = 0;
         for (int i = 1; i < number; i++) {
-            index = (value[i] < value[index]) ? i : index;
+            index = (value[i] > value[index]) ? i : index;
         }
         return index;
     }
 
 
-    private static int valueFitness(double[] srcFitness, double[] destFitnes) {
-        return 0;
+    private static int[] calculateControlNum(double[][] fitness) {
+        int[] array = new int[number];
+        for (int i = 0; i < number; i++) {
+            for (int j = i + 1; j < number; j++) {
+                switch (valueFitness(fitness[i], fitness[j])) {
+                    case VALUE_POSITIVE:
+                        array[i]++;
+                        break;
+                    case VALUE_NEGATIVE:
+                        array[j]++;
+                        break;
+                }
+            }
+        }
+        return array;
+    }
+
+    private static int valueFitness(double[] fitnes, double[] fitnes1) {
+        if (fitnes[0] < fitnes1[0] && fitnes[1] < fitnes[1]) {
+            return VALUE_POSITIVE;
+        } else if (fitnes[0] > fitnes1[0] && fitnes[1] > fitnes1[1]) {
+            return VALUE_NEGATIVE;
+        }
+        return VALUE_EITHER;
     }
 
 
@@ -304,18 +372,19 @@ public class MOPSO {
         return fitness;
     }
 
-    private static void initial(double[][] v, double[][] x, double[][] xPre, double[][] pBest, double[] gBest, double xMin, double xMax) {
+    private static void initial(double xMin, double xMax, double x1Max, double x1Min) {
         for (int i = 0; i < number; i++) {
-            for (int j = 0; j < dimension; j++) {
+            v[i][0] = -(x1Max - x1Min) + rand() * (x1Max - x1Min) * 2;
+            x[i][0] = x1Min + rand() * (x1Max - x1Min);
+            for (int j = 1; j < dimension; j++) {
                 v[i][j] = -(xMax - xMin) + rand() * (xMax - xMin) * 2;
                 x[i][j] = xMin + rand() * (xMax - xMin);
-                xPre[i][j] = x[i][j];
             }
         }
     }
 
 
-    private static final double getGx(double x[], int dim) {
+    private static double getGx(double x[], int dim) {
         double result = 0.0;
         switch (function) {
             case ZDT1:
@@ -329,17 +398,17 @@ public class MOPSO {
                 for (int i = 1; i < dim; i++) {
                     result = +(x[i] * x[i] - 10 * Math.cos(4 * Math.PI * x[i]));
                 }
-                return 1 + 10 * (number - 1) + result;
+                return 1 + 10 * (dim - 1) + result;
         }
 
         return 1;
     }
 
-    private static final double getF1x(double x) {
+    private static double getF1x(double x) {
         return x;
     }
 
-    private static final double getF2x(double xx[], int dim) {
+    private static double getF2x(double xx[], int dim) {
         double gx = getGx(xx, dim);
         double f1 = getF1x(xx[0]);
         switch (function) {
@@ -357,8 +426,12 @@ public class MOPSO {
 
     //[0,1]
     private static double rand() {
-        Random random = new Random();
         return random.nextDouble();
     }
+
+    private static int rand(int n) {
+        return random.nextInt(n);
+    }
+
 
 }
