@@ -1,10 +1,13 @@
-import com.google.common.base.Preconditions;
+import com.google.common.collect.Maps;
 import con.TestFunction;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.HashMap;
 import java.util.Random;
 
 /**
@@ -14,14 +17,14 @@ public class MOPSO {
     public static final int VALUE_POSITIVE = 1;
     public static final int VALUE_NEGATIVE = -1;
     public static final int VALUE_EITHER = 0;
-    static TestFunction function = TestFunction.ZDT4;
-    static final double c1 = 2;
-    static final double c2 = 2;
-    static final double w1 = 0.4;
-    static final double w2 = 0.3;
-    static final int gen = 200;
-    static final int number = 120;
-    static final int dimension = 30;
+    static TestFunction function = TestFunction.ZDT2;
+    static double c1 = 2;
+    static double c2 = 1;
+    static double w1 = 0.8;
+    static double w2 = 0.3;
+    static int gen = 100;
+    static int number = 500;
+    static int dimension = 30;
     static final int numOfCondition = 2;
     public static final int WINDOWS_WIDTH = 800;
     public static final int WINDOWS_HEIGHT = 400;
@@ -32,18 +35,20 @@ public class MOPSO {
     public static final int STATE_BEGOVERN = 1;
     public static final int STATE_NOTBEGOVERN = 2;
     private static JPanel jPanel;
-    private static double[][] fitness;
+    private static double[][] fitness = new double[number][dimension];
     private static double w;
-    private static int[] parotFont;
+    private static int[] state;
     private static boolean isShowParot = true;
     private static Random random = new Random();
     private static double[][] v = new double[number][dimension];
     private static double[][] x = new double[number][dimension];
+    private static int numOfParot;
+    private static JFrame jFrame;
 
 
     public static void main(String[] args) {
 
-        JFrame frame = new JFrame();
+        jFrame = new JFrame();
         jPanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
@@ -58,7 +63,7 @@ public class MOPSO {
                     g.drawString(String.format("%.1f", i * 0.2), X_OFFSET + X_BASE_VALUE / 5 * i, WINDOWS_HEIGHT - Y_OFFSET + 20);
                 }
                 for (int i = 0; i < number; i++) {
-                    if (isShowParot || parotFont[i] == STATE_NOTBEGOVERN) {
+                    if (isShowParot || state[i] == STATE_NOTBEGOVERN) {
                         g.fillOval((int) (X_BASE_VALUE * fitness[i][0]) + X_OFFSET, (int) (WINDOWS_HEIGHT - Y_BASE_VALUE * fitness[i][1]) - Y_OFFSET, 5, 5);
 //                        g.drawString(String.valueOf(i), (int) (X_BASE_VALUE * fitness[i][0]) + X_OFFSET, (int) (WINDOWS_HEIGHT - Y_BASE_VALUE * fitness[i][1]) - Y_OFFSET);
                     }
@@ -80,19 +85,24 @@ public class MOPSO {
                 repaint();
             }
         });
-        JComboBox comboBox = new JComboBox();
-        comboBox.addItem("ZDT1");
-        comboBox.addItem("ZDT2");
-        comboBox.addItem("ZDT3");
-        comboBox.addItem("ZDT4");
+        final JComboBox comboBox = new JComboBox();
+        comboBox.addItem(TestFunction.ZDT1.getName());
+        comboBox.addItem(TestFunction.ZDT2.getName());
+        comboBox.addItem(TestFunction.ZDT3.getName());
+        comboBox.addItem(TestFunction.ZDT4.getName());
+        final HashMap<String, Enum> map = Maps.newHashMap();
+        map.put(TestFunction.ZDT1.getName(), TestFunction.ZDT1);
+        map.put(TestFunction.ZDT2.getName(), TestFunction.ZDT2);
+        map.put(TestFunction.ZDT3.getName(), TestFunction.ZDT3);
+        map.put(TestFunction.ZDT4.getName(), TestFunction.ZDT4);
         JButton jb_ok = new JButton("确定");
 
-        JTextField jt_w1 = new JTextField(String.valueOf(w1));
-        JTextField jt_w2 = new JTextField(String.valueOf(w2));
-        JTextField jt_c1 = new JTextField(String.valueOf(c1));
-        JTextField jt_c2 = new JTextField(String.valueOf(c2));
-        JTextField jt_num = new JTextField(String.valueOf(number));
-        JTextField jt_gen = new JTextField(String.valueOf(gen));
+        final JTextField jt_w1 = new JTextField(String.valueOf(w1));
+        final JTextField jt_w2 = new JTextField(String.valueOf(w2));
+        final JTextField jt_c1 = new JTextField(String.valueOf(c1));
+        final JTextField jt_c2 = new JTextField(String.valueOf(c2));
+        final JTextField jt_num = new JTextField(String.valueOf(number));
+        final JTextField jt_gen = new JTextField(String.valueOf(gen));
         GridLayout layout = new GridLayout(8, 2, 9, 9);
         JPanel jPanel1 = new JPanel();
         jPanel1.setLayout(layout);
@@ -113,26 +123,44 @@ public class MOPSO {
         jPanel1.add(comboBox);
         jPanel1.add(jb_ok);
 
-        frame.add(jPanel, BorderLayout.CENTER);
+        jFrame.add(jPanel, BorderLayout.CENTER);
 
         JPanel jPanel2 = new JPanel();
         jPanel2.setLayout(new BorderLayout());
         jPanel2.add(jPanel1, BorderLayout.NORTH);
-        frame.add(jPanel2, BorderLayout.EAST);
-        frame.setSize(WINDOWS_WIDTH, WINDOWS_HEIGHT + 50);
-        frame.setVisible(true);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        jFrame.add(jPanel2, BorderLayout.EAST);
+        jFrame.setSize(WINDOWS_WIDTH, WINDOWS_HEIGHT + 50);
+        jFrame.setVisible(true);
+        jFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-        double xMin = 0;
-        double xMax = 1;
-        double x1Min = 0;
-        double x1Max = 1;
-        double personalBest[][] = new double[number][dimension];
-        double globalBest[][] = new double[number][dimension];
 
-        initial(xMin, xMax, x1Max, x1Min);
-        pso(personalBest, globalBest, xMax, xMin, x1Max, x1Min);
+        jb_ok.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                function = (TestFunction) map.get(comboBox.getSelectedItem());
+                w1 = Double.valueOf(jt_w1.getText());
+                w2 = Double.valueOf(jt_w2.getText());
+                c1 = Double.valueOf(jt_c1.getText());
+                c2 = Double.valueOf(jt_c2.getText());
+                gen  = Integer.valueOf(jt_gen.getText());
+                number  = Integer.valueOf(jt_num.getText());
+
+                new Thread(new Runnable() {
+                    public void run() {
+                        double xMin = 0;
+                        double xMax = 1;
+                        double x1Min = 0;
+                        double x1Max = 1;
+                        double personalBest[][] = new double[number][dimension];
+                        double globalBest[][] = new double[number][dimension];
+                        initial(xMin, xMax, x1Max, x1Min);
+                        pso(personalBest, globalBest, xMax, xMin, x1Max, x1Min);
+                    }
+                }).start();
+
+            }
+        });
     }
+
 
     private static void repaint() {
         jPanel.repaint();
@@ -146,60 +174,23 @@ public class MOPSO {
         for (int g = 0; g < gen; g++) {
 
             fitness = calculateFitness(x);
-            parotFont = checkParotFont(fitness);
+            int[] indexNotBeControlOrderDesc = checkParotFont(fitness);
             repaint();
-            for (int i = 0; i < number; i++) {
-                System.out.print(fitness[i][0] + " " + fitness[i][1] + "; ");
-            }
-            System.out.println();
+//            for (int i = 0; i < number; i++) {
+//                System.out.print(fitness[i][0] + " " + fitness[i][1] + "; ");
+//            }
+            System.out.println(g);
 
             int[] array = calculateControlNum(fitness);
 
-            int numBeGovern = 0;
-            int numNotBeGovern = 0;
+            double[] distanceBusy = calculateDistanceBusy(indexNotBeControlOrderDesc);
             for (int i = 0; i < number; i++) {
-                numBeGovern = (parotFont[i] == STATE_BEGOVERN) ? numBeGovern + 1 : numBeGovern;
-                numNotBeGovern = (parotFont[i] == STATE_NOTBEGOVERN) ? numNotBeGovern + 1 : numNotBeGovern;
-            }
-
-            int[] indexBeGovern = new int[numBeGovern];
-            int[] indexNotBeGovern = new int[numNotBeGovern];
-            int p = 0, q = 0;
-            for (int i = 0; i < number; i++) {
-                switch (parotFont[i]) {
-                    case STATE_BEGOVERN:
-                        indexBeGovern[p++] = i;
-                        break;
-                    case STATE_NOTBEGOVERN:
-                        indexNotBeGovern[q++] = i;
-                        break;
-                    default:
-                        for (int j = 0; j < number; j++) {
-                            System.out.print(parotFont[j] + " ");
-                        }
-                        System.out.println("\n");
-                        throw new IllegalStateException();
+                int k = roulette(distanceBusy);
+                for (int j = 0; j < dimension; j++) {
+                    globalBest[i][j] = x[indexNotBeControlOrderDesc[k]][j];
                 }
             }
 
-
-            for (int i = 0; i < number; i++) {
-                int k;
-                switch (parotFont[i]) {
-                    case STATE_NOTBEGOVERN:
-//                        k = rand(numBeGovern);
-//                        for (int j = 0; j < dimension; j++) {
-//                            globalBest[i][j] = x[indexBeGovern[k]][j];
-//                        }
-//                        break;
-                    case STATE_BEGOVERN:
-                        k = rand(numNotBeGovern);
-                        for (int j = 0; j < dimension; j++) {
-                            globalBest[i][j] = x[indexNotBeGovern[k]][j];
-                        }
-                        break;
-                }
-            }
 
             //更新personalBest
             for (int i = 0; i < number; i++) {
@@ -233,19 +224,21 @@ public class MOPSO {
                 }
             }
         }
+
     }
 
-    private static double d(int[] index) {
-        for (int i = 0; i < number; i++) {
-            for (int j = 0; j < number; j++) {
-                if (fitness[j][0] < fitness[i][0]) {
-
-                } else {
-
-                }
-            }
+    private static double[] calculateDistanceBusy(int[] index) {
+        double[] array = new double[numOfParot];
+        double sum = 0;
+        for (int i = 1; i < numOfParot - 1; i++) {
+            array[i] = Math.abs(fitness[index[i - 1]][0] - fitness[index[i + 1]][0]) +
+                    Math.abs(fitness[index[i - 1]][1] - fitness[index[i + 1]][1]);
+            sum += array[i];
         }
-        return 1;
+        for (int i = 1; i < numOfParot - 1; i++) {
+            array[i] /= sum;
+        }
+        return array;
     }
 
     private static double updateV(double v, double x, double pBest, double gbest, double xMax, double xMin) {
@@ -272,23 +265,24 @@ public class MOPSO {
     }
 
     private static int[] checkParotFont(double[][] fitness) {
-        int[] isUpdate = new int[number];
+        int[] array = new int[number];
+        state = new int[number];
         int x0 = calculateMinIndexInX(fitness);
-        isUpdate[x0] = STATE_NOTBEGOVERN;
-        int x1 = 0;
+        state[x0] = STATE_NOTBEGOVERN;
+        int x1 = 0, t = 0;
         for (int i = 0; i < number; i++) {
             double k = 0.0;
             for (int j = 0; j < number; j++) {
-                if (isUpdate[j] == STATE_BEGOVERN || isUpdate[j] == STATE_NOTBEGOVERN || x0 == j) {
+                if (state[j] == STATE_BEGOVERN || state[j] == STATE_NOTBEGOVERN || x0 == j) {
                     continue;
                 }
                 if (fitness[x0][0] == fitness[j][0]) {
-                    isUpdate[j] = STATE_BEGOVERN;
+                    state[j] = STATE_BEGOVERN;
                     continue;
                 }
                 double tanA = (fitness[x0][1] - fitness[j][1]) / (fitness[x0][0] - fitness[j][0]);
                 if (tanA >= 0) {
-                    isUpdate[j] = STATE_BEGOVERN;
+                    state[j] = STATE_BEGOVERN;
                 } else {
                     if (tanA < k) {
                         x1 = j;
@@ -299,10 +293,12 @@ public class MOPSO {
             if (k == 0) {
                 break;
             }
-            isUpdate[x1] = STATE_NOTBEGOVERN;
+            array[t++] = x1;
+            state[x1] = STATE_NOTBEGOVERN;
             x0 = x1;
         }
-        return isUpdate;
+        numOfParot = t;
+        return array;
     }
 
     //求x最小的最左下方的点
@@ -429,8 +425,17 @@ public class MOPSO {
         return random.nextDouble();
     }
 
-    private static int rand(int n) {
-        return random.nextInt(n);
+    private static int roulette(double[] distance) {
+        double sum = 0;
+        double r = rand();
+        for (int i = 1; i < numOfParot - 1; i++) {
+            sum += distance[i];
+            if (sum > r) {
+                return i;
+            }
+        }
+
+        return -1;
     }
 
 
