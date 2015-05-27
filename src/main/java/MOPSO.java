@@ -17,15 +17,14 @@ public class MOPSO {
     public static final int VALUE_POSITIVE = 1;
     public static final int VALUE_NEGATIVE = -1;
     public static final int VALUE_EITHER = 0;
-    public static final int used = 1;
-    public static final int USED = used;
-    static TestFunction function = TestFunction.ZDT2;
+    public static final int USED = 1;
+    static TestFunction function = TestFunction.ZDT1;
     static double c1 = 2;
-    static double c2 = 1;
+    static double c2 = 2;
     static double w1 = 0.8;
     static double w2 = 0.3;
-    static int gen = 5;
-    static int number = 10;
+    static int gen = 250;
+    static int number = 300;
     static int dimension = 30;
     static final int numOfCondition = 2;
     public static final int WINDOWS_WIDTH = 800;
@@ -35,7 +34,7 @@ public class MOPSO {
     public static final int X_OFFSET = 50;
     public static final int Y_OFFSET = 100;
     public static final int STATE_BEGOVERN = 1;
-    public static final int STATE_NOTBEGOVERN = 2;
+    public static final int STATE_NOTBEGOVERN = 0;
     private static JPanel jPanel;
     private static double[][] fitness = new double[number][dimension];
     private static double w;
@@ -46,7 +45,9 @@ public class MOPSO {
     private static double[][] x;
     private static int numOfParot;
     private static JFrame jFrame;
-    private static int[] state2;
+    private static int[] state2 = new int[number];
+    private static double mutateMaxXValue = 0.01;
+    private static double mutateChance = 0.05;
 
 
     public static void main(String[] args) {
@@ -66,8 +67,15 @@ public class MOPSO {
                 }
                 for (int i = 0; i < number; i++) {
                     if (isShowParot || state2[i] == 0) {
-                        g.fillOval((int) (X_BASE_VALUE * fitness[i][0]) + X_OFFSET, (int) (WINDOWS_HEIGHT - Y_BASE_VALUE * fitness[i][1]) - Y_OFFSET, 5, 5);
-//                        g.drawString(String.valueOf(i), (int) (X_BASE_VALUE * fitness[i][0]) + X_OFFSET, (int) (WINDOWS_HEIGHT - Y_BASE_VALUE * fitness[i][1]) - Y_OFFSET);
+                        if (state2[i] == STATE_BEGOVERN) {
+                            g.fillOval((int) (X_BASE_VALUE * fitness[i][0]) + X_OFFSET, (int) (WINDOWS_HEIGHT - Y_BASE_VALUE * fitness[i][1]) - Y_OFFSET, 5, 5);
+                        } else if (state2[i] == STATE_NOTBEGOVERN) {
+                            g.setColor(Color.red);
+                            g.fillOval((int) (X_BASE_VALUE * fitness[i][0]) + X_OFFSET, (int) (WINDOWS_HEIGHT - Y_BASE_VALUE * fitness[i][1]) - Y_OFFSET, 5, 5);
+                        }
+                        g.setColor(Color.blue);
+                        g.setFont(new Font("宋体",Font.BOLD ,20));
+                        g.drawString(String.format("%.3f", (double) numOfParot / number), X_OFFSET + 200, WINDOWS_HEIGHT - Y_OFFSET + 200);
                     }
                 }
             }
@@ -79,6 +87,8 @@ public class MOPSO {
         JButton jb_c2 = new JButton("c2");
         JButton jb_num = new JButton("粒子个数");
         JButton jb_gen = new JButton("迭代次数");
+        JButton jb_mutateX = new JButton("变异阀值");
+        JButton jb_mutateC = new JButton("变异比率");
         JButton jb_isShowParot = new JButton("仅显示parotfont");
         final Checkbox checkbox = new Checkbox();
         checkbox.addItemListener(new ItemListener() {
@@ -105,7 +115,9 @@ public class MOPSO {
         final JTextField jt_c2 = new JTextField(String.valueOf(c2));
         final JTextField jt_num = new JTextField(String.valueOf(number));
         final JTextField jt_gen = new JTextField(String.valueOf(gen));
-        GridLayout layout = new GridLayout(8, 2, 9, 9);
+        final JTextField jt_mutateX = new JTextField(String.valueOf(mutateMaxXValue));
+        final JTextField jt_mutateC = new JTextField(String.valueOf(mutateChance));
+        GridLayout layout = new GridLayout(10, 2, 9, 9);
         JPanel jPanel1 = new JPanel();
         jPanel1.setLayout(layout);
         jPanel1.add(jb_w1);
@@ -120,20 +132,24 @@ public class MOPSO {
         jPanel1.add(jt_num);
         jPanel1.add(jb_gen);
         jPanel1.add(jt_gen);
+        jPanel1.add(jb_mutateX);
+        jPanel1.add(jt_mutateX);
+        jPanel1.add(jb_mutateC);
+        jPanel1.add(jt_mutateC);
         jPanel1.add(jb_isShowParot);
         jPanel1.add(checkbox);
         jPanel1.add(comboBox);
         jPanel1.add(jb_ok);
-
         jFrame.add(jPanel, BorderLayout.CENTER);
 
         JPanel jPanel2 = new JPanel();
         jPanel2.setLayout(new BorderLayout());
         jPanel2.add(jPanel1, BorderLayout.NORTH);
         jFrame.add(jPanel2, BorderLayout.EAST);
-        jFrame.setSize(WINDOWS_WIDTH, WINDOWS_HEIGHT + 50);
+        jFrame.setSize(WINDOWS_WIDTH, WINDOWS_HEIGHT + 200);
         jFrame.setVisible(true);
         jFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        jFrame.setTitle("MOPSO");
 
         jb_ok.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -144,10 +160,8 @@ public class MOPSO {
                 c2 = Double.valueOf(jt_c2.getText());
                 gen = Integer.valueOf(jt_gen.getText());
                 number = Integer.valueOf(jt_num.getText());
-                fitness = new double[number][dimension];
-                v = new double[number][dimension];
-                x = new double[number][dimension];
-
+                mutateMaxXValue = Double.valueOf(jt_mutateX.getText());
+                mutateChance = Double.valueOf(jt_mutateC.getText());
 
                 new Thread(new Runnable() {
                     public void run() {
@@ -155,12 +169,17 @@ public class MOPSO {
                         double xMax = 1;
                         double x1Min = 0;
                         double x1Max = 1;
-                        double personalBest[][] = new double[number][dimension];
-                        double globalBest[][] = new double[number][dimension];
+                        dimension = 30;
                         if (function == TestFunction.ZDT4) {
                             xMax = 5;
                             xMin = -5;
+                            dimension = 10;
                         }
+                        fitness = new double[number][dimension];
+                        v = new double[number][dimension];
+                        x = new double[number][dimension];
+                        double personalBest[][] = new double[number][dimension];
+                        double globalBest[][] = new double[number][dimension];
                         initial(xMin, xMax, x1Max, x1Min);
                         pso(personalBest, globalBest, xMax, xMin, x1Max, x1Min);
                     }
@@ -172,24 +191,30 @@ public class MOPSO {
 
 
     private static void repaint() {
+//        try {
+//            Thread.sleep(1000);
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
         jPanel.repaint();
     }
 
     private static void pso(double[][] personalBest, double[][] globalBest, double xMax, double xMin, double x1Max, double x1Min) {
-        double[][] fitnessPLast = calculateFitness(x);
+        double[][] fitnessPLast = calculateFitness(x, xMax, xMin, x1Max, x1Min);
         int[] controlPNumLast = new int[number];
 
         //迭代G代
         for (int g = 0; g < gen; g++) {
 
-            fitness = calculateFitness(x);
+            fitness = calculateFitness(x, xMax, xMin, x1Max, x1Min);
             state2 = calculateControlArray(fitness);
             int[] indexNotBeControlOrderDesc = getIndexNotBeControlOrderDesc(fitness);//checkParotFont(fitness);
-
+//            for (int i = 0; i < numOfParot; i++) {
+//                System.out.print(fitness[indexNotBeControlOrderDesc[i]][0] + " " + fitness[indexNotBeControlOrderDesc[i]][1] + "; ");
+//            }
             repaint();
 //            for (int i = 0; i < number; i++) {
 //                System.out.print(fitness[i][0] + " " + fitness[i][1] + "; ");
-//                System.out.print(state[i] + " ");
 //            }
 //            System.out.println("\n");
 //            System.out.println(Arrays.toString(indexNotBeControlOrderDesc));
@@ -198,6 +223,15 @@ public class MOPSO {
             int[] array = calculateControlNum(fitness);
 
             double[] distanceBusy = calculateDistanceBusy(indexNotBeControlOrderDesc);
+//            int[] indexBeControl = new int[number];
+//            int numOfBeControl = 0;
+//            for (int i = 0; i < number; i++) {
+//                switch (state2[i]) {
+//                    case STATE_BEGOVERN:
+//                        indexBeControl[numOfBeControl++] = i;
+//                }
+//            }
+//            System.out.println(Arrays.toString(distanceBusy));
             for (int i = 0; i < number; i++) {
                 int k = roulette(distanceBusy);
                 for (int j = 0; j < dimension; j++) {
@@ -269,13 +303,20 @@ public class MOPSO {
     private static double[] calculateDistanceBusy(int[] index) {
         double[] array = new double[numOfParot];
         double sum = 0;
-        for (int i = 1; i < numOfParot - 1; i++) {
-            array[i] = Math.abs(fitness[index[i - 1]][0] - fitness[index[i + 1]][0]) +
-                    Math.abs(fitness[index[i - 1]][1] - fitness[index[i + 1]][1]);
-            sum += array[i];
-        }
-        for (int i = 1; i < numOfParot - 1; i++) {
-            array[i] /= sum;
+        if (numOfParot > 2) {
+            for (int i = 1; i < numOfParot - 1; i++) {
+                array[i] = Math.abs(fitness[index[i - 1]][0] - fitness[index[i + 1]][0]) +
+                        Math.abs(fitness[index[i - 1]][1] - fitness[index[i + 1]][1]);
+                sum += array[i];
+            }
+            for (int i = 1; i < numOfParot - 1; i++) {
+                array[i] /= sum;
+            }
+        } else if (numOfParot == 2) {
+            array[0] = 0.5;
+            array[1] = 0.5;
+        } else if (numOfParot == 1) {
+            array[0] = 1;
         }
         return array;
     }
@@ -399,19 +440,34 @@ public class MOPSO {
     }
 
     private static int valueFitness(double[] fitnes, double[] fitnes1) {
-        if (fitnes[0] <= fitnes1[0] && fitnes[1] <= fitnes1[1]) {
+        if (fitnes[0] < fitnes1[0] && fitnes[1] < fitnes1[1]) {
             return VALUE_POSITIVE;
         } else if (fitnes[0] > fitnes1[0] && fitnes[1] > fitnes1[1]) {
             return VALUE_NEGATIVE;
+        } else if (fitnes[0] == fitnes1[0] || fitnes[1] == fitnes1[1]) {
+            if (fitnes[1] < fitnes1[1] || fitnes[0] < fitnes[0]) {
+                return VALUE_POSITIVE;
+            }
+            if (fitnes[1] > fitnes1[1] || fitnes[0] > fitnes[0]) {
+                return VALUE_NEGATIVE;
+            }
         }
         return VALUE_EITHER;
     }
 
 
-    private static double[][] calculateFitness(double[][] x) {
+    private static double[][] calculateFitness(double[][] x, double xMax, double xMin, double x1Max, double x1Min) {
         double[][] fitness = new double[number][numOfCondition];
         for (int i = 0; i < number; i++) {
             fitness[i][0] = getF1x(x[i][0]);
+            if (fitness[i][0] < mutateMaxXValue) {
+                if (rand() < mutateChance) {
+                    x[i][0] = getRandX(x1Max, x1Min);
+                    for (int j = 1; j < dimension; j++) {
+                        x[i][j] = getRandX(xMax, xMin);
+                    }
+                }
+            }
             fitness[i][1] = getF2x(x[i], dimension);
         }
         return fitness;
@@ -426,15 +482,22 @@ public class MOPSO {
 
     private static void initial(double xMin, double xMax, double x1Max, double x1Min) {
         for (int i = 0; i < number; i++) {
-            v[i][0] = -(x1Max - x1Min) + rand() * (x1Max - x1Min) * 2;
-            x[i][0] = x1Min + rand() * (x1Max - x1Min);
+            v[i][0] = getRandV(x1Max, x1Min);
+            x[i][0] = getRandX(x1Max, x1Min);
             for (int j = 1; j < dimension; j++) {
-                v[i][j] = -(xMax - xMin) + rand() * (xMax - xMin) * 2;
-                x[i][j] = xMin + rand() * (xMax - xMin);
+                v[i][j] = getRandV(xMax, xMin);
+                x[i][j] = getRandX(xMax, xMin);
             }
         }
     }
 
+    private static double getRandX(double xMax, double xMin) {
+        return xMin + rand() * (xMax - xMin);
+    }
+
+    private static double getRandV(double xMax, double xMin) {
+        return -(xMax - xMin) + rand() * (xMax - xMin) * 2;
+    }
 
     private static double getGx(double x[], int dim) {
         double result = 0.0;
@@ -443,12 +506,15 @@ public class MOPSO {
             case ZDT2:
             case ZDT3:
                 for (int i = 1; i < dim; i++) {
-                    result = +x[i];
+                    result += x[i];
                 }
                 return 1 + result * 9 / (dim - 1);
             case ZDT4:
                 for (int i = 1; i < dim; i++) {
-                    result = +(x[i] * x[i] - 10 * Math.cos(4 * Math.PI * x[i]));
+                    result += (x[i] * x[i] - 10 * Math.cos(4 * Math.PI * x[i]));
+                }
+                if (result < -80) {
+                    System.out.println(result);
                 }
                 return 1 + 10 * (dim - 1) + result;
         }
@@ -481,6 +547,10 @@ public class MOPSO {
         return random.nextDouble();
     }
 
+    private static int rand(int n) {
+        return random.nextInt(n);
+    }
+
     private static int roulette(double[] distance) {
         double sum = 0;
         double r = rand();
@@ -490,7 +560,6 @@ public class MOPSO {
                 return i;
             }
         }
-
         return 0;
     }
 
