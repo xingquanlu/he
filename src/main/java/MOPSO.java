@@ -45,42 +45,33 @@ public class MOPSO {
     private static double[][] v;
     private static double[][] x;
     private static int numOfPareto;
-    private static JFrame jFrame;
     private static int[] state = new int[number];
 
 
     public static void main(String[] args) {
-        jFrame = new JFrame();
+        JFrame jFrame = new JFrame();
         jPanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
-                g.setColor(Color.blue);
-                g.drawLine(X_OFFSET, WINDOWS_HEIGHT - Y_OFFSET, X_OFFSET + X_BASE_VALUE * 1, WINDOWS_HEIGHT - Y_OFFSET);
-                g.drawLine(X_OFFSET, WINDOWS_HEIGHT - Y_OFFSET + Y_BASE_VALUE / 2, X_OFFSET, WINDOWS_HEIGHT - Y_BASE_VALUE * 1 - Y_OFFSET);
-                for (int i = 0; i < 7; i++) {
-                    g.drawString(String.valueOf(-1 + i * 0.5), X_OFFSET - 23, WINDOWS_HEIGHT - Y_OFFSET + Y_BASE_VALUE / 2 - i * Y_BASE_VALUE / 4);
-                }
-                for (int i = 0; i < 6; i++) {
-                    g.drawString(String.format("%.1f", i * 0.2), X_OFFSET + X_BASE_VALUE / 5 * i, WINDOWS_HEIGHT - Y_OFFSET + 20);
-                }
+                g.setColor(Color.black);
+                g.drawLine(X_OFFSET, WINDOWS_HEIGHT - Y_OFFSET, X_OFFSET + X_BASE_VALUE, WINDOWS_HEIGHT - Y_OFFSET);
+                g.drawLine(X_OFFSET, WINDOWS_HEIGHT - Y_OFFSET, X_OFFSET, WINDOWS_HEIGHT - Y_BASE_VALUE - Y_OFFSET);
+//                for (int i = 0; i < 7; i++) {
+//                    g.drawString(String.valueOf(-1 + i * 0.5), X_OFFSET - 23, WINDOWS_HEIGHT - Y_OFFSET + Y_BASE_VALUE / 2 - i * Y_BASE_VALUE / 4);
+//                }
+//                for (int i = 0; i < 6; i++) {
+//                    g.drawString(String.format("%.1f", i * 0.2), X_OFFSET + X_BASE_VALUE / 5 * i, WINDOWS_HEIGHT - Y_OFFSET + 20);
+//                }
                 for (int i = 0; i < number; i++) {
-                    if (isShowPareto || state[i] == 0) {
-                        if (state[i] == STATE_BEGOVERN) {
-                            g.fillOval((int) (X_BASE_VALUE * fitness[i][0]) + X_OFFSET, (int) (WINDOWS_HEIGHT - Y_BASE_VALUE * fitness[i][1]) - Y_OFFSET, 5, 5);
-                        } else if (state[i] == STATE_NOTBEGOVERN) {
-                            g.setColor(Color.red);
-                            g.fillOval((int) (X_BASE_VALUE * fitness[i][0]) + X_OFFSET, (int) (WINDOWS_HEIGHT - Y_BASE_VALUE * fitness[i][1]) - Y_OFFSET, 5, 5);
-                        }
-                        g.setColor(Color.blue);
-                        g.setFont(new Font("宋体", Font.BOLD, 20));
-                        g.drawString(String.format("%.3f", (double) numOfPareto / number), X_OFFSET + 200, WINDOWS_HEIGHT - Y_OFFSET + 200);
+                    if (state[i] == 0) {
+                        g.fillOval((int) (X_BASE_VALUE * fitness[i][0]) + X_OFFSET, (int) (WINDOWS_HEIGHT - Y_BASE_VALUE * fitness[i][1]) - Y_OFFSET, 5, 5);
                     }
                 }
             }
         };
 
-        JButton jb_w1 = new JButton("w1");
+        JButton jb_w1 = new JButton("w");
         JButton jb_w2 = new JButton("w2");
         JButton jb_c1 = new JButton("c1");
         JButton jb_c2 = new JButton("c2");
@@ -116,13 +107,13 @@ public class MOPSO {
         final JTextField jt_gen = new JTextField(String.valueOf(gen));
         final JTextField jt_mutateX = new JTextField(String.valueOf(mutateMaxXValue));
         final JTextField jt_mutateC = new JTextField(String.valueOf(mutateChance));
-        GridLayout layout = new GridLayout(10, 2, 9, 9);
+        GridLayout layout = new GridLayout(6, 2, 9, 9);
         JPanel jPanel1 = new JPanel();
         jPanel1.setLayout(layout);
         jPanel1.add(jb_w1);
         jPanel1.add(jt_w1);
-        jPanel1.add(jb_w2);
-        jPanel1.add(jt_w2);
+//        jPanel1.add(jb_w2);
+//        jPanel1.add(jt_w2);
         jPanel1.add(jb_c1);
         jPanel1.add(jt_c1);
         jPanel1.add(jb_c2);
@@ -131,12 +122,12 @@ public class MOPSO {
         jPanel1.add(jt_num);
         jPanel1.add(jb_gen);
         jPanel1.add(jt_gen);
-        jPanel1.add(jb_mutateX);
-        jPanel1.add(jt_mutateX);
-        jPanel1.add(jb_mutateC);
-        jPanel1.add(jt_mutateC);
-        jPanel1.add(jb_isShowPareto);
-        jPanel1.add(checkbox);
+//        jPanel1.add(jb_mutateX);
+//        jPanel1.add(jt_mutateX);
+//        jPanel1.add(jb_mutateC);
+//        jPanel1.add(jt_mutateC);
+//        jPanel1.add(jb_isShowPareto);
+//        jPanel1.add(checkbox);
         jPanel1.add(comboBox);
         jPanel1.add(jb_ok);
         jFrame.add(jPanel, BorderLayout.CENTER);
