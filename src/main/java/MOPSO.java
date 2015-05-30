@@ -10,9 +10,6 @@ import java.awt.event.ItemListener;
 import java.util.HashMap;
 import java.util.Random;
 
-/**
- * Created by lxq on 15-4-20.
- */
 public class MOPSO {
     public static final int VALUE_POSITIVE = 1;
     public static final int VALUE_NEGATIVE = -1;
@@ -45,19 +42,18 @@ public class MOPSO {
     private static double[][] v;
     private static double[][] x;
     private static int numOfPareto;
-    private static JFrame jFrame;
     private static int[] state = new int[number];
 
 
     public static void main(String[] args) {
-        jFrame = new JFrame();
+        JFrame jFrame = new JFrame();
         jPanel = new JPanel() {
             @Override
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
                 g.setColor(Color.blue);
-                g.drawLine(X_OFFSET, WINDOWS_HEIGHT - Y_OFFSET, X_OFFSET + X_BASE_VALUE * 1, WINDOWS_HEIGHT - Y_OFFSET);
-                g.drawLine(X_OFFSET, WINDOWS_HEIGHT - Y_OFFSET + Y_BASE_VALUE / 2, X_OFFSET, WINDOWS_HEIGHT - Y_BASE_VALUE * 1 - Y_OFFSET);
+                g.drawLine(X_OFFSET, WINDOWS_HEIGHT - Y_OFFSET, X_OFFSET + X_BASE_VALUE, WINDOWS_HEIGHT - Y_OFFSET);
+                g.drawLine(X_OFFSET, WINDOWS_HEIGHT - Y_OFFSET + Y_BASE_VALUE / 2, X_OFFSET, WINDOWS_HEIGHT - Y_BASE_VALUE - Y_OFFSET);
                 for (int i = 0; i < 7; i++) {
                     g.drawString(String.valueOf(-1 + i * 0.5), X_OFFSET - 23, WINDOWS_HEIGHT - Y_OFFSET + Y_BASE_VALUE / 2 - i * Y_BASE_VALUE / 4);
                 }
