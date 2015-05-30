@@ -22,25 +22,23 @@ public class MOPSO {
     static double c1 = 2;
     static double c2 = 2;
     static double w1 = 0.8;
-    static double w2 = 0.3;
-    static int gen = 250;
-    static int number = 300;
+    static int gen = 100;
+    static int number = 200;
     static int dimension = 30;
     static final int numOfCondition = 2;
     static double mutateMaxXValue = 0.01;
     static double mutateChance = 0.05;
-    public static final int WINDOWS_WIDTH = 800;
-    public static final int WINDOWS_HEIGHT = 400;
+    public static final int WINDOWS_WIDTH = 700;
+    public static final int WINDOWS_HEIGHT = 500;
     public static final int X_BASE_VALUE = 400;
-    public static final int Y_BASE_VALUE = 200;
-    public static final int X_OFFSET = 50;
-    public static final int Y_OFFSET = 100;
+    public static final int Y_BASE_VALUE = 400;
+    public static final int X_OFFSET = 70;
+    public static final int Y_OFFSET = 70;
     public static final int STATE_BEGOVERN = 1;
     public static final int STATE_NOTBEGOVERN = 0;
     private static JPanel jPanel;
     private static double[][] fitness = new double[number][dimension];
     private static double w;
-    private static boolean isShowPareto = true;
     private static Random random = new Random();
     private static double[][] v;
     private static double[][] x;
@@ -57,50 +55,40 @@ public class MOPSO {
                 g.setColor(Color.black);
                 g.drawLine(X_OFFSET, WINDOWS_HEIGHT - Y_OFFSET, X_OFFSET + X_BASE_VALUE, WINDOWS_HEIGHT - Y_OFFSET);
                 g.drawLine(X_OFFSET, WINDOWS_HEIGHT - Y_OFFSET, X_OFFSET, WINDOWS_HEIGHT - Y_BASE_VALUE - Y_OFFSET);
-//                for (int i = 0; i < 7; i++) {
-//                    g.drawString(String.valueOf(-1 + i * 0.5), X_OFFSET - 23, WINDOWS_HEIGHT - Y_OFFSET + Y_BASE_VALUE / 2 - i * Y_BASE_VALUE / 4);
-//                }
-//                for (int i = 0; i < 6; i++) {
-//                    g.drawString(String.format("%.1f", i * 0.2), X_OFFSET + X_BASE_VALUE / 5 * i, WINDOWS_HEIGHT - Y_OFFSET + 20);
-//                }
+
+                for (int i = 0; i < 11; i++) {
+                    g.drawString(String.format("%.1f", (double) (i * 0.1)), X_OFFSET + i * X_BASE_VALUE / 10, WINDOWS_HEIGHT - Y_OFFSET + 25);
+                    g.drawString(String.format("%.1f", (double) (i * 0.2)), X_OFFSET - 25, WINDOWS_HEIGHT - Y_OFFSET - i * Y_BASE_VALUE / 10);
+                }
+
                 for (int i = 0; i < number; i++) {
                     if (state[i] == 0) {
-                        g.fillOval((int) (X_BASE_VALUE * fitness[i][0]) + X_OFFSET, (int) (WINDOWS_HEIGHT - Y_BASE_VALUE * fitness[i][1]) - Y_OFFSET, 5, 5);
+                        g.fillOval((int) (X_BASE_VALUE * fitness[i][0]) + X_OFFSET, (int) (WINDOWS_HEIGHT - Y_BASE_VALUE * 0.5 * fitness[i][1]) - Y_OFFSET, 5, 5);
                     }
                 }
             }
         };
 
         JButton jb_w1 = new JButton("w");
-        JButton jb_w2 = new JButton("w2");
         JButton jb_c1 = new JButton("c1");
         JButton jb_c2 = new JButton("c2");
-        JButton jb_num = new JButton("粒子个数");
-        JButton jb_gen = new JButton("迭代次数");
-        JButton jb_mutateX = new JButton("变异阀值");
-        JButton jb_mutateC = new JButton("变异比率");
-        JButton jb_isShowPareto = new JButton("仅显示paretofont");
+        JButton jb_num = new JButton("粒子数");
+        JButton jb_gen = new JButton("迭代数");
         final Checkbox checkbox = new Checkbox();
         checkbox.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
-                isShowPareto = !checkbox.getState();
                 repaint();
             }
         });
         final JComboBox comboBox = new JComboBox();
         comboBox.addItem(TestFunction.ZDT1.getName());
         comboBox.addItem(TestFunction.ZDT2.getName());
-        comboBox.addItem(TestFunction.ZDT3.getName());
-//        comboBox.addItem(TestFunction.ZDT4.getName());
         final HashMap<String, Enum> map = Maps.newHashMap();
         map.put(TestFunction.ZDT1.getName(), TestFunction.ZDT1);
         map.put(TestFunction.ZDT2.getName(), TestFunction.ZDT2);
-        map.put(TestFunction.ZDT3.getName(), TestFunction.ZDT3);
-        map.put(TestFunction.ZDT4.getName(), TestFunction.ZDT4);
-        JButton jb_ok = new JButton("确定");
+        JButton jb_ok = new JButton("OK");
 
         final JTextField jt_w1 = new JTextField(String.valueOf(w1));
-        final JTextField jt_w2 = new JTextField(String.valueOf(w2));
         final JTextField jt_c1 = new JTextField(String.valueOf(c1));
         final JTextField jt_c2 = new JTextField(String.valueOf(c2));
         final JTextField jt_num = new JTextField(String.valueOf(number));
@@ -112,8 +100,6 @@ public class MOPSO {
         jPanel1.setLayout(layout);
         jPanel1.add(jb_w1);
         jPanel1.add(jt_w1);
-//        jPanel1.add(jb_w2);
-//        jPanel1.add(jt_w2);
         jPanel1.add(jb_c1);
         jPanel1.add(jt_c1);
         jPanel1.add(jb_c2);
@@ -122,21 +108,15 @@ public class MOPSO {
         jPanel1.add(jt_num);
         jPanel1.add(jb_gen);
         jPanel1.add(jt_gen);
-//        jPanel1.add(jb_mutateX);
-//        jPanel1.add(jt_mutateX);
-//        jPanel1.add(jb_mutateC);
-//        jPanel1.add(jt_mutateC);
-//        jPanel1.add(jb_isShowPareto);
-//        jPanel1.add(checkbox);
         jPanel1.add(comboBox);
         jPanel1.add(jb_ok);
         jFrame.add(jPanel, BorderLayout.CENTER);
 
         JPanel jPanel2 = new JPanel();
         jPanel2.setLayout(new BorderLayout());
-        jPanel2.add(jPanel1, BorderLayout.NORTH);
-        jFrame.add(jPanel2, BorderLayout.EAST);
-        jFrame.setSize(WINDOWS_WIDTH, WINDOWS_HEIGHT + 200);
+        jPanel2.add(jPanel1, BorderLayout.CENTER);
+        jFrame.add(jPanel2, BorderLayout.WEST);
+        jFrame.setSize(WINDOWS_WIDTH, WINDOWS_HEIGHT + 30);
         jFrame.setVisible(true);
         jFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         jFrame.setTitle("MOPSO");
@@ -145,7 +125,6 @@ public class MOPSO {
             public void actionPerformed(ActionEvent e) {
                 function = (TestFunction) map.get(comboBox.getSelectedItem());
                 w1 = Double.valueOf(jt_w1.getText());
-                w2 = Double.valueOf(jt_w2.getText());
                 c1 = Double.valueOf(jt_c1.getText());
                 c2 = Double.valueOf(jt_c2.getText());
                 gen = Integer.valueOf(jt_gen.getText());
@@ -227,7 +206,7 @@ public class MOPSO {
             }
 
             //更新v、x
-            w = w2 + (w1 - w2) * (gen - g) / gen;
+            w = w1;
             for (int i = 0; i < number; i++) {
                 v[i][0] = updateV(v[i][0], x[i][0], personalBest[i][0], globalBest[i][0], x1Max, x1Min);
                 x[i][0] = updateX(v[i][0], x[i][0], x1Max, x1Min);
